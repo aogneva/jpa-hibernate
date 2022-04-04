@@ -1,5 +1,6 @@
 package edu.spring.domain;
 
+import com.yannbriancon.interceptor.HibernateQueryInterceptor;
 import edu.spring.repostory.PersonRepository;
 import edu.spring.repostory.UniversityRepository;
 import org.junit.jupiter.api.Assertions;
@@ -22,6 +23,9 @@ public class PersonTest {
 
     @Autowired
     private PersonRepository repository;
+
+    @Autowired
+    private HibernateQueryInterceptor hibernateQueryInterceptor;
 
     @BeforeAll
     private static void createBase(
@@ -65,11 +69,13 @@ public class PersonTest {
     @DisplayName("N+1")
     public void findOneProblemN1() {
         System.out.println("----------------N+1------------------");
+        hibernateQueryInterceptor.startQueryCount();
         List<Person> list = repository.findAll();
         assertThat(!list.isEmpty());
         Assertions.assertNotNull(list.get(0).getUniversity().getShortName());
         assertThat(list.get(0).getUniversity().getShortName().equalsIgnoreCase("ПГУ"));
 
+        assertThat(hibernateQueryInterceptor.getQueryCount()).isStrictlyBetween(2L,10L);
         System.out.println(list);
     }
 
@@ -77,11 +83,12 @@ public class PersonTest {
     @DisplayName("N+1 solved")
     public void findOneProblemN1Solved() {
         System.out.println("----------------N+1------------------");
+        hibernateQueryInterceptor.startQueryCount();
         List<Person> list = repository.findAllFetch();
         assertThat(!list.isEmpty());
         Assertions.assertNotNull(list.get(0).getUniversity().getShortName());
         assertThat(list.get(0).getUniversity().getShortName().equalsIgnoreCase("ПГУ"));
-
+        assertThat(hibernateQueryInterceptor.getQueryCount()).isEqualTo(1);
         System.out.println(list);
     }
 
